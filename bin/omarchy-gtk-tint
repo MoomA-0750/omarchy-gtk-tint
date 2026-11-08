@@ -122,6 +122,8 @@ awk -v out4="$tmp4" -v out3="$tmp3" '
     print "treeview.view header button { background: @theme_bg_color; color: @theme_fg_color; border-color: @borders; }" > out3
     print "check:checked, radio:checked, switch:checked { background-image: none; background-color: @theme_selected_bg_color; border-color: @theme_selected_bg_color; color: @theme_selected_fg_color; }" > out3
     print "progressbar progress, scale highlight, levelbar block.filled { background-image: none; background-color: @theme_selected_bg_color; border-color: @theme_selected_bg_color; }" > out3
+    print "button.text-button:not(.suggested-action):not(.destructive-action):not(.flat) { background-image: none; background-color: " raised "; color: @theme_fg_color; border-color: @borders; box-shadow: none; }" > out3
+    print "button.text-button:not(.suggested-action):not(.destructive-action):not(.flat):hover { background-color: shade(" raised ", 1.1); }" > out3
     print "button.suggested-action { background: @theme_selected_bg_color; color: @theme_selected_fg_color; }" > out3
   }
 ' "$colors_file"
