@@ -36,7 +36,7 @@ fi
 shoot() {
   local port="$1" out="$2" try
   for try in 1 2 3 4; do
-    chromium --headless --no-sandbox --disable-gpu --hide-scrollbars --window-size=800,540 \
+    chromium --headless --no-sandbox --disable-gpu --hide-scrollbars --window-size=800,700 \
       --timeout=$((3000 * try)) --screenshot="$out" "http://127.0.0.1:$port/" >/dev/null 2>&1 || true
     [[ -f $out && $(stat -c %s "$out") -gt 5000 ]] && return 0
   done

@@ -124,6 +124,10 @@ awk -v out4="$tmp4" -v out3="$tmp3" '
     print "progressbar progress, scale highlight, levelbar block.filled { background-image: none; background-color: @theme_selected_bg_color; border-color: @theme_selected_bg_color; }" > out3
     print "button.text-button:not(.suggested-action):not(.destructive-action):not(.flat) { background-image: none; background-color: " raised "; color: @theme_fg_color; border-color: @borders; box-shadow: none; }" > out3
     print "button.text-button:not(.suggested-action):not(.destructive-action):not(.flat):hover { background-color: shade(" raised ", 1.1); }" > out3
+    print "placessidebar, placessidebar list, placessidebar row, .sidebar, .sidebar list, .sidebar row { background-color: @theme_base_color; color: @theme_fg_color; border-color: @borders; }" > out3
+    print "placessidebar row:selected, .sidebar row:selected { background-color: @theme_selected_bg_color; color: @theme_selected_fg_color; }" > out3
+    print "button.image-button:not(.suggested-action):not(.destructive-action):not(.flat):not(.titlebutton), combobox button, combobox > box > button { background-image: none; background-color: " raised "; color: @theme_fg_color; border-color: @borders; box-shadow: none; }" > out3
+    print "button.image-button:not(.suggested-action):not(.destructive-action):not(.flat):not(.titlebutton):checked { background-color: shade(" raised ", 1.25); }" > out3
     print "button.suggested-action { background: @theme_selected_bg_color; color: @theme_selected_fg_color; }" > out3
   }
 ' "$colors_file"
