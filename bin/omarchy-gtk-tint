@@ -118,7 +118,7 @@ awk -v out4="$tmp4" -v out3="$tmp3" '
     print "window, .background { background-color: @theme_bg_color; color: @theme_fg_color; }" > out3
     print "headerbar, .titlebar { background: " raised "; color: @theme_fg_color; border-color: @borders; }" > out3
     print "entry, textview text, treeview.view, .view { background-color: @theme_base_color; color: @theme_text_color; }" > out3
-    print "*:selected, selection { background-color: @theme_selected_bg_color; color: @theme_selected_fg_color; }" > out3
+    print "*:selected, selection, treeview.view:selected, .view:selected, .view text selection { background-color: @theme_selected_bg_color; color: @theme_selected_fg_color; }" > out3
     print "treeview.view header button { background: @theme_bg_color; color: @theme_fg_color; border-color: @borders; }" > out3
     print "check:checked, radio:checked, switch:checked { background-image: none; background-color: @theme_selected_bg_color; border-color: @theme_selected_bg_color; color: @theme_selected_fg_color; }" > out3
     print "progressbar progress, scale highlight, levelbar block.filled { background-image: none; background-color: @theme_selected_bg_color; border-color: @theme_selected_bg_color; }" > out3

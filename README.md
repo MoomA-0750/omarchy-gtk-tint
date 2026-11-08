@@ -6,6 +6,8 @@ Omarchy はテーマを切り替えると、端末や VS Code などには `colo
 
 これを入れると、テーマを切り替えるたびに `colors.toml` から GTK 用の CSS を作り、GTK のアプリが起動時に読む `gtk.css` から読ませる。
 
+![左: 素の Adwaita、右: Ajisai Rainbow の色を当てたもの](docs/compare-ajisai.png)
+
 ## 入れ方
 
 ```sh
