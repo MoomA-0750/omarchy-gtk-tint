@@ -1,0 +1,131 @@
+#!/bin/bash
+# Omarchy のテーマの色（colors.toml）から GTK4/libadwaita と GTK3 の色の CSS を作る。
+#
+#   omarchy-gtk-tint [colors.toml] [出力先のフォルダ]
+#
+# 既定の入力は今のテーマ、既定の出力は ~/.config/omarchy/gtk-tint/。
+# 作るのは gtk4.css と gtk3.css の二つで、~/.config/gtk-4.0/gtk.css と
+# ~/.config/gtk-3.0/gtk.css から @import して読ませる（install.sh が足す）。
+# GTK のアプリは起動したときに gtk.css を読むので、テーマを切り替えたあとは
+# アプリを開き直すと色が変わる。
+
+set -euo pipefail
+
+colors_file="${1:-$HOME/.local/state/omarchy/current/theme/colors.toml}"
+out_dir="${2:-${XDG_CONFIG_HOME:-$HOME/.config}/omarchy/gtk-tint}"
+
+if [[ ! -f $colors_file ]]; then
+  echo "omarchy-gtk-tint: $colors_file がありません" >&2
+  exit 1
+fi
+
+mkdir -p "$out_dir"
+tmp4=$(mktemp "$out_dir/.gtk4.css.XXXXXX")
+tmp3=$(mktemp "$out_dir/.gtk3.css.XXXXXX")
+trap 'rm -f "$tmp4" "$tmp3"' EXIT
+
+awk -v out4="$tmp4" -v out3="$tmp3" '
+  # colors.toml は「key = "#rrggbb"」の並び。表や配列は使っていない。
+  /^[[:space:]]*[A-Za-z0-9_]+[[:space:]]*=/ {
+    line = $0
+    sub(/[[:space:]]*#[^"]*$/, "", line)
+    key = line; sub(/[[:space:]]*=.*/, "", key); gsub(/[[:space:]]/, "", key)
+    val = line; sub(/^[^=]*=[[:space:]]*/, "", val); gsub(/"/, "", val); gsub(/[[:space:]]/, "", val)
+    c[key] = val
+  }
+
+  function hexv(h, i) { return index("0123456789abcdef", substr(tolower(h), i, 1)) - 1 }
+  function chan(h, i,   v) { v = (hexv(h, i) * 16 + hexv(h, i + 1)) / 255
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ^ 2.4 }
+  function lum(h) { sub(/^#/, "", h); return 0.2126 * chan(h, 1) + 0.7152 * chan(h, 3) + 0.0722 * chan(h, 5) }
+  function ratio(a, b,   la, lb) { la = lum(a); lb = lum(b)
+    return la > lb ? (la + 0.05) / (lb + 0.05) : (lb + 0.05) / (la + 0.05) }
+  # 色の上に載せる文字は、テーマの背景色と文字色のうち見やすい方にする
+  function on(bg) { return ratio(bg, c["background"]) >= ratio(bg, c["foreground"]) ? c["background"] : c["foreground"] }
+  function pick(a, b) { return (a in c) ? c[a] : c[b] }
+
+  function emit(name, value) { printf "@define-color %s %s;\n", name, value > out4 }
+  function emit3(name, value) { printf "@define-color %s %s;\n", name, value > out3 }
+
+  END {
+    if (!("background" in c) || !("foreground" in c)) {
+      print "omarchy-gtk-tint: colors.toml に background と foreground がありません" > "/dev/stderr"
+      exit 1
+    }
+    bg = c["background"]; fg = c["foreground"]
+    accent = pick("accent", "blue")
+    view = pick("dark_background", "background")
+    raised = pick("lighter_background", "background")
+    border = pick("muted", "lighter_background")
+    red = pick("red", "accent"); green = pick("green", "accent"); yellow = pick("yellow", "accent")
+
+    print "/* omarchy-gtk-tint が作ったファイル。手で直さない（テーマを切り替えると作り直される） */" > out4
+    emit("accent_color", accent)
+    emit("accent_bg_color", accent)
+    emit("accent_fg_color", on(accent))
+    emit("destructive_color", red)
+    emit("destructive_bg_color", red)
+    emit("destructive_fg_color", on(red))
+    emit("success_color", green)
+    emit("success_bg_color", green)
+    emit("success_fg_color", on(green))
+    emit("warning_color", yellow)
+    emit("warning_bg_color", yellow)
+    emit("warning_fg_color", on(yellow))
+    emit("error_color", red)
+    emit("error_bg_color", red)
+    emit("error_fg_color", on(red))
+    emit("window_bg_color", bg)
+    emit("window_fg_color", fg)
+    emit("view_bg_color", view)
+    emit("view_fg_color", fg)
+    emit("headerbar_bg_color", raised)
+    emit("headerbar_fg_color", fg)
+    emit("headerbar_backdrop_color", bg)
+    emit("headerbar_border_color", border)
+    emit("sidebar_bg_color", view)
+    emit("sidebar_fg_color", fg)
+    emit("sidebar_backdrop_color", view)
+    emit("sidebar_border_color", border)
+    emit("secondary_sidebar_bg_color", view)
+    emit("secondary_sidebar_fg_color", fg)
+    emit("secondary_sidebar_backdrop_color", view)
+    emit("secondary_sidebar_border_color", border)
+    emit("card_bg_color", raised)
+    emit("card_fg_color", fg)
+    emit("dialog_bg_color", raised)
+    emit("dialog_fg_color", fg)
+    emit("popover_bg_color", raised)
+    emit("popover_fg_color", fg)
+    emit("thumbnail_bg_color", raised)
+    emit("thumbnail_fg_color", fg)
+
+    # GTK3 の Adwaita が読む古い名前。効くのは一部の部品だけ。
+    print "/* omarchy-gtk-tint が作ったファイル。手で直さない（テーマを切り替えると作り直される） */" > out3
+    emit3("theme_bg_color", bg)
+    emit3("theme_fg_color", fg)
+    emit3("theme_text_color", fg)
+    emit3("theme_base_color", view)
+    emit3("theme_selected_bg_color", accent)
+    emit3("theme_selected_fg_color", on(accent))
+    emit3("insensitive_bg_color", bg)
+    emit3("borders", border)
+    emit3("unfocused_borders", border)
+    emit3("warning_color", yellow)
+    emit3("error_color", red)
+    emit3("success_color", green)
+    # 定義した色だけでは窓と入力欄の地が変わらないので、そこだけ直接塗る
+    print "window, .background { background-color: @theme_bg_color; color: @theme_fg_color; }" > out3
+    print "headerbar, .titlebar { background: " raised "; color: @theme_fg_color; border-color: @borders; }" > out3
+    print "entry, textview text, treeview.view, .view { background-color: @theme_base_color; color: @theme_text_color; }" > out3
+    print "*:selected, selection { background-color: @theme_selected_bg_color; color: @theme_selected_fg_color; }" > out3
+    print "treeview.view header button { background: @theme_bg_color; color: @theme_fg_color; border-color: @borders; }" > out3
+    print "check:checked, radio:checked, switch:checked { background-image: none; background-color: @theme_selected_bg_color; border-color: @theme_selected_bg_color; color: @theme_selected_fg_color; }" > out3
+    print "progressbar progress, scale highlight, levelbar block.filled { background-image: none; background-color: @theme_selected_bg_color; border-color: @theme_selected_bg_color; }" > out3
+    print "button.suggested-action { background: @theme_selected_bg_color; color: @theme_selected_fg_color; }" > out3
+  }
+' "$colors_file"
+
+mv "$tmp4" "$out_dir/gtk4.css"
+mv "$tmp3" "$out_dir/gtk3.css"
+trap - EXIT
